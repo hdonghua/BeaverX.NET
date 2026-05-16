@@ -6,7 +6,7 @@
 		<Nullable>enable</Nullable>
 
 		<PackageId>BeaverX.EntityFrameworkCore.PostgreSql</PackageId>
-		<Version>1.0.0-preview.2</Version>
+		<Version>1.0.0-preview.3</Version>
 		<Authors>hedonghua</Authors>
 		<Description>BeaverX.EntityFrameworkCore.PostgreSql 是 BeaverX 框架针对 PostgreSQL 数据库的官方适配驱动包。</Description>
 		<PackageTags>abp;efcore;postgresql;npgsql;orm;framework;net10</PackageTags>

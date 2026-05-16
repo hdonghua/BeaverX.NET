@@ -6,7 +6,7 @@
 		<Nullable>enable</Nullable>
 
 		<PackageId>BeaverX.WebMvc</PackageId>
-		<Version>1.0.0-preview.2</Version>
+		<Version>1.0.0-preview.3</Version>
 		<Authors>hedonghua</Authors>
 		<Description>BeaverX.WebMvc 是 BeaverX 快速开发框架的表现层（MVC/Web API）核心集成包。</Description>
 		<PackageTags>abp;aspnetcore;mvc;webapi;controller;framework;net10;aot</PackageTags>
