@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+
+		<PackageId>BeaverX.EntityFrameworkCore.PostgreSql</PackageId>
+		<Version>1.0.0-preview.1</Version>
+		<Authors>hedonghua</Authors>
+		<Description>BeaverX.EntityFrameworkCore.PostgreSql 是 BeaverX 框架针对 PostgreSQL 数据库的官方适配驱动包。</Description>
+		<PackageTags>abp;efcore;postgresql;npgsql;orm;framework;net10</PackageTags>
+		<Copyright>Copyright © 2026 BeaverX</Copyright>
+
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/hdonghua/BeaverX.NET</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/hdonghua/BeaverX.NET.git</RepositoryUrl>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\BeaverX.EntityFrameworkCore\BeaverX.EntityFrameworkCore.csproj" />
+	</ItemGroup>
+</Project>

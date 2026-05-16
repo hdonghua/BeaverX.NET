@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+
+		<PackageId>BeaverX.EntityFrameworkCore</PackageId>
+		<Version>1.0.0-preview.1</Version>
+		<Authors>hedonghua</Authors>
+		<Description>BeaverX.EntityFrameworkCore 是 BeaverX 框架的 EF Core 公共基础设施包。它实现了 Domain 层定义的通用泛型仓储契约，并内置了全自动审计、软删除全局查询过滤等工业级硬核生产力特性。</Description>
+		<PackageTags>abp;efcore;entityframework;orm;framework;net10</PackageTags>
+		<Copyright>Copyright © 2026 BeaverX</Copyright>
+
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/hdonghua/BeaverX.NET</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/hdonghua/BeaverX.NET.git</RepositoryUrl>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.4" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\BeaverX.Domain\BeaverX.Domain.csproj" />
+	</ItemGroup>
+</Project>

@@ -3,4 +3,8 @@
     <Project Path="samples/BeaverX.Sample.HttpApi/BeaverX.Sample.HttpApi.csproj" />
   </Folder>
   <Project Path="BeaverX.Core/BeaverX.Core.csproj" />
+  <Project Path="BeaverX.Domain/BeaverX.Domain.csproj" Id="eb2c3190-4f91-4a7b-944a-01db06d39b86" />
+  <Project Path="BeaverX.EntityFrameworkCore.PostgreSql/BeaverX.EntityFrameworkCore.PostgreSql.csproj" Id="b535827d-5df9-46cf-80b4-c7dc01831c96" />
+  <Project Path="BeaverX.EntityFrameworkCore/BeaverX.EntityFrameworkCore.csproj" Id="b8207fc8-c7ea-410b-9463-21e40e23e466" />
+  <Project Path="BeaverX.WebMvc/BeaverX.WebMvc.csproj" Id="4e962f96-8236-4754-a51f-be72f0016008" />
 </Solution>

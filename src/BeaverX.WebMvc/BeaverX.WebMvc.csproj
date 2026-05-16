@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+
+		<PackageId>BeaverX.WebMvc</PackageId>
+		<Version>1.0.0-preview.1</Version>
+		<Authors>hedonghua</Authors>
+		<Description>BeaverX.WebMvc 是 BeaverX 快速开发框架的表现层（MVC/Web API）核心集成包。</Description>
+		<PackageTags>abp;aspnetcore;mvc;webapi;controller;framework;net10;aot</PackageTags>
+		<Copyright>Copyright © 2026 BeaverX</Copyright>
+
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/hdonghua/BeaverX.NET</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/hdonghua/BeaverX.NET.git</RepositoryUrl>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\BeaverX.Domain\BeaverX.Domain.csproj" />
+	</ItemGroup>
+
+</Project>
