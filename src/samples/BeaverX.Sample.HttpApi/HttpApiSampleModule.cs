@@ -4,7 +4,7 @@ namespace BeaverX.Sample.HttpApi;
 
 public class HttpApiSampleModule : BeaverXModule
 {
-    public override void ConfigureServices(ModuleConfigureContext context)
+    public override void ConfigureServices(ServiceConfigurationContext context)
     {
         context.Services.AddOpenApi();
     }

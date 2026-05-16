@@ -6,7 +6,7 @@ namespace BeaverX.Domain;
 
 public class BeaverXDomainModule : BeaverXModule
 {
-    public override void ConfigureServices(ModuleConfigureContext context) 
+    public override void ConfigureServices(ServiceConfigurationContext context) 
     {
         context.Services.TryAddScoped<ICurrentUser, NullCurrentUser>();
     }

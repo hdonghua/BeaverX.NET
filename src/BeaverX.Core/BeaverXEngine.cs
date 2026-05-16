@@ -16,7 +16,7 @@ public static class BeaverXEngine
         var sortedModuleTypes = SortModuleTypes(typeof(TStartupModule));
         _modules = sortedModuleTypes.Select(t => (BeaverXModule)Activator.CreateInstance(t)!).ToList();
 
-        var context = new ModuleConfigureContext(services);
+        var context = new ServiceConfigurationContext(services);
         foreach (var module in _modules)
         {
             module.ConfigureServices(context);

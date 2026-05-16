@@ -9,7 +9,7 @@ public abstract class BeaverXModule
     /// 注册服务到容器
     /// </summary>
     /// <param name="context"></param>
-    public virtual void ConfigureServices(ModuleConfigureContext context) { }
+    public virtual void ConfigureServices(ServiceConfigurationContext context) { }
 
     /// <summary>
     /// 初始化中间件

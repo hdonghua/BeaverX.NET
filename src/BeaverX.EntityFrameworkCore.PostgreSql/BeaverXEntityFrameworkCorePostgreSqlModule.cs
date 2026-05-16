@@ -7,7 +7,7 @@ namespace BeaverX.EntityFrameworkCore.PostgreSql;
 [DependsOn(typeof(BeaverXEntityFrameworkCoreModule))]
 public class BeaverXEntityFrameworkCorePostgreSqlModule : BeaverXModule
 {
-    public override void ConfigureServices(ModuleConfigureContext context)
+    public override void ConfigureServices(ServiceConfigurationContext context)
     {
         context.Services.TryAddSingleton<IDbDriverOptionsBuilder, PostgreSqlDbDriverOptionsBuilder>();
     }

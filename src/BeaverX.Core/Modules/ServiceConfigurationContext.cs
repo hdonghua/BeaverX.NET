@@ -2,4 +2,4 @@
 
 namespace BeaverX.Core.Modules;
 
-public record ModuleConfigureContext(IServiceCollection Services);
+public record ServiceConfigurationContext(IServiceCollection Services);

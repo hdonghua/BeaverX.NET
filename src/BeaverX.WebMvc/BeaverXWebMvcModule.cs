@@ -13,7 +13,7 @@ namespace BeaverX.WebMvc;
 [DependsOn(typeof(BeaverXDomainModule))]
 public class BeaverXWebMvcModule : BeaverXModule
 {
-    public override void ConfigureServices(ModuleConfigureContext context)
+    public override void ConfigureServices(ServiceConfigurationContext context)
     {
         var services = context.Services;
 

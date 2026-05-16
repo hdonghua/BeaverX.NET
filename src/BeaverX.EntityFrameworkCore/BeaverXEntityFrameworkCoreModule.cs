@@ -9,7 +9,7 @@ namespace BeaverX.EntityFrameworkCore;
 [DependsOn(typeof(BeaverXDomainModule))]
 public class BeaverXEntityFrameworkCoreModule : BeaverXModule
 {
-    public override void ConfigureServices(ModuleConfigureContext context)
+    public override void ConfigureServices(ServiceConfigurationContext context)
     {
         var services = context.Services;
 
