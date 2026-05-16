@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/samples/">
+    <Project Path="samples/BeaverX.Sample.HttpApi/BeaverX.Sample.HttpApi.csproj" />
+  </Folder>
+  <Project Path="BeaverX.Core/BeaverX.Core.csproj" />
+</Solution>
