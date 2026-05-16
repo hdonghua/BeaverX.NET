@@ -11,7 +11,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\BeaverX.Core\BeaverX.Core.csproj" />
+    <ProjectReference Include="..\..\BeaverX.EntityFrameworkCore.PostgreSql\BeaverX.EntityFrameworkCore.PostgreSql.csproj" />
+    <ProjectReference Include="..\..\BeaverX.WebMvc\BeaverX.WebMvc.csproj" />
   </ItemGroup>
 
 </Project>
