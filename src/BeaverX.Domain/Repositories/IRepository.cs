@@ -36,6 +36,6 @@ public interface IRepository<TEntity, TKey>
 /// </summary>
 /// <typeparam name="TEntity">继承自 IEntity（即主键为 long）的实体</typeparam>
 public interface IRepository<TEntity> : IRepository<TEntity, long>
-    where TEntity : class, IEntity
+    where TEntity : class, IEntity<long>
 {
 }

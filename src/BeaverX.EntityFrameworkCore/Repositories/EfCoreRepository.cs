@@ -125,7 +125,7 @@ public class EfCoreRepository<TDbContext, TEntity, TKey> : IRepository<TEntity, 
 /// </summary>
 public class EfCoreRepository<TDbContext, TEntity> : EfCoreRepository<TDbContext, TEntity, long>, IRepository<TEntity>
     where TDbContext : DbContext
-    where TEntity : class, IEntity
+    where TEntity : class, IEntity<long>
 {
     public EfCoreRepository(TDbContext dbContext) : base(dbContext)
     {
