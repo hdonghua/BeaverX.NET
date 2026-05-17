@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BeaverX.Core.Modules;
@@ -7,23 +8,14 @@ public record ServiceConfigurationContext
 {
     public IServiceCollection Services { get; }
 
-    public IConfiguration Configuration => _configurationLazy.Value;
+    public IConfiguration Configuration { get; }
 
-    private readonly Lazy<IConfiguration> _configurationLazy;
-    public ServiceConfigurationContext(IServiceCollection services)
+    public IWebHostEnvironment Environment { get; }
+
+    public ServiceConfigurationContext(IServiceCollection services, IConfiguration configuration, IWebHostEnvironment hostEnvironment)
     {
         Services = services;
-
-        _configurationLazy = new Lazy<IConfiguration>(() =>
-        {
-            var descriptor = services.FirstOrDefault(d => d.ServiceType == typeof(IConfiguration));
-
-            if (descriptor?.ImplementationInstance is IConfiguration configInstance)
-            {
-                return configInstance;
-            }
-
-            return new ConfigurationBuilder().Build();
-        });
+        Configuration = configuration;
+        Environment = hostEnvironment;
     }
 }

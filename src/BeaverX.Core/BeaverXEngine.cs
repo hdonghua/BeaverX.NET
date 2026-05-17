@@ -1,8 +1,9 @@
-﻿using System.Reflection;
+﻿using BeaverX.Core.Dependency;
+using BeaverX.Core.Modules;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
-using BeaverX.Core.Dependency;
-using BeaverX.Core.Modules;
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 
 namespace BeaverX.Core;
 
@@ -10,20 +11,20 @@ public static class BeaverXEngine
 {
     private static List<BeaverXModule> _modules = new();
 
-    public static IServiceCollection AddBeaverX<TStartupModule>(this IServiceCollection services)
+    public static IServiceCollection AddBeaverX<TStartupModule>([NotNull] this WebApplicationBuilder builder)
         where TStartupModule : BeaverXModule
     {
         var sortedModuleTypes = SortModuleTypes(typeof(TStartupModule));
         _modules = sortedModuleTypes.Select(t => (BeaverXModule)Activator.CreateInstance(t)!).ToList();
 
-        var context = new ServiceConfigurationContext(services);
+        var context = new ServiceConfigurationContext(builder.Services, builder.Configuration, builder.Environment);
         foreach (var module in _modules)
         {
             module.ConfigureServices(context);
-            RegisterAssemblyDependencies(services, module.GetType().Assembly);
+            RegisterAssemblyDependencies(builder.Services, module.GetType().Assembly);
         }
 
-        return services;
+        return builder.Services;
     }
 
     public static IApplicationBuilder InitializeBeaverX(this IApplicationBuilder app)
