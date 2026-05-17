@@ -3,7 +3,7 @@ using BeaverX.Sample.HttpApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddBeaverX<HttpApiSampleModule>();
+builder.AddBeaverX<HttpApiSampleModule>();
 
 var app = builder.Build();
 
