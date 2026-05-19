@@ -29,6 +29,8 @@ public static class BeaverXEfCoreServiceCollectionExtensions
             driverBuilder.Configure<TDbContext>(options, connectionString);
         });
 
+        services.AddScoped<DbContext>(sp => sp.GetRequiredService<TDbContext>());
+
         // 抓取当前 TDbContext 中所有类型为 DbSet<T> 的属性
         var dbSetProperties = typeof(TDbContext)
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
