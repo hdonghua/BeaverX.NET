@@ -1,22 +1,15 @@
 ﻿namespace BeaverX.Domain.Uow;
 
 /// <summary>
-/// BeaverX 工作单元生命周期契约
+/// BeaverX 工作单元契约
 /// </summary>
 public interface IUnitOfWork : IDisposable, IAsyncDisposable
 {
     /// <summary>
-    /// 开启事务
+    /// 在 ExecutionStrategy 可重试块内执行数据库操作（委托内可含查询与 SaveChanges），并提交物理事务。
+    /// 嵌套调用时仅执行委托，共享最外层的物理事务与提交；任一层抛出异常则整体回滚。
     /// </summary>
-    Task BeginTransactionAsync(CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// 提交所有 DbContext 的更改并提交物理事务
-    /// </summary>
-    Task CommitAsync(CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// 回滚事务
-    /// </summary>
-    Task RollbackAsync(CancellationToken cancellationToken = default);
+    /// <param name="action">数据库操作委托</param>
+    /// <param name="cancellationToken">取消令牌，会传入 <paramref name="action"/></param>
+    Task ExecuteAsync(Func<CancellationToken, Task> action, CancellationToken cancellationToken = default);
 }

@@ -92,7 +92,7 @@ public class OrderService : IScopedDependency
 PostgreSQL 官方适配包，基于 **Npgsql**。
 
 - 注册 `PostgreSqlDbDriverOptionsBuilder`，在 `AddBeaverXDbContext` 内部调用 `UseNpgsql`。
-- 注册 `IUnitOfWork` 的 EF 实现，支持 `BeginTransactionAsync` / `CommitAsync` / `RollbackAsync`。
+- 注册 `IUnitOfWork` 实现，通过 `ExecuteAsync` 在 `ExecutionStrategy` 可重试块内执行并提交事务（兼容 `EnableRetryOnFailure`）。
 
 若使用其他数据库，可参考本包实现自定义的 `IDbDriverOptionsBuilder` 与 `IUnitOfWork`。
 
@@ -261,7 +261,15 @@ public class ProductController : BeaverXController
 
 ### 7. 工作单元（可选，PostgreSql 包）
 
-在需要显式事务的场景注入 `IUnitOfWork`：
+需要**多步写操作同一事务提交 / 异常整体回滚**时，注入 `IUnitOfWork`。框架只提供单一入口：
+
+```csharp
+Task ExecuteAsync(Func<CancellationToken, Task> action, CancellationToken cancellationToken = default);
+```
+
+委托内的查询、`SaveChanges`（含仓储默认 `autoSave: true`）都在同一 `ExecutionStrategy` 与物理事务中执行；委托正常结束则提交，抛出异常则回滚。
+
+**多步写入示例：**
 
 ```csharp
 public class OrderAppService : IScopedDependency
@@ -275,22 +283,75 @@ public class OrderAppService : IScopedDependency
         _orders = orders;
     }
 
-    public async Task CreateWithTransactionAsync(Order order)
+    public Task CreateWithTransactionAsync(Order order, CancellationToken cancellationToken = default)
     {
-        await _uow.BeginTransactionAsync();
-        try
+        return _uow.ExecuteAsync(async ct =>
         {
-            await _orders.InsertAsync(order, autoSave: false);
-            await _uow.CommitAsync();
-        }
-        catch
-        {
-            await _uow.RollbackAsync();
-            throw;
-        }
+            await _orders.InsertAsync(order, cancellationToken: ct);
+            // 更多写操作...
+        }, cancellationToken);
     }
 }
 ```
+
+**先查后改（推荐查询也放在委托内）：**
+
+```csharp
+await _uow.ExecuteAsync(async ct =>
+{
+    var order = await _orders.FindAsync(orderId, ct)
+        ?? throw new InvalidOperationException("订单不存在");
+
+    order.Status = OrderStatus.Paid;
+    await _orders.UpdateAsync(order, cancellationToken: ct);
+}, cancellationToken);
+```
+
+也可在 `ExecuteAsync` **外**先查询，在委托内用已跟踪实体更新（同一 Scoped `DbContext`、勿 `AsNoTracking`）。更稳妥的做法是把查询一并放进委托。
+
+**控制器示例（批量删除，异常回滚）：**
+
+```csharp
+[HttpDelete("users")]
+public async Task<string> DeleteUsersAsync(string ids, CancellationToken cancellationToken)
+{
+    try
+    {
+        await _uow.ExecuteAsync(async ct =>
+        {
+            foreach (var id in ids.Split(','))
+            {
+                await _userRepository.DeleteAsync(long.Parse(id), cancellationToken: ct);
+            }
+        }, cancellationToken);
+        return "ok";
+    }
+    catch
+    {
+        return "fail";
+    }
+}
+```
+
+**嵌套调用：**内层 `ExecuteAsync` 只执行委托，不新开事务，由最外层统一 `SaveChanges` 并提交：
+
+```csharp
+await _uow.ExecuteAsync(async ct =>
+{
+    await _orders.InsertAsync(order, cancellationToken: ct);
+
+    await _uow.ExecuteAsync(async ctInner =>
+    {
+        await _orderItems.InsertManyAsync(items, cancellationToken: ctInner);
+    }, ct);
+}, cancellationToken);
+```
+
+**注意：**
+
+1. 事务边界 = 一次最外层 `ExecuteAsync`；勿在委托外做需要与委托内写入同一事务的 `SaveChanges`。
+2. 委托内避免长时间非数据库 IO，以免拉长事务持有时间。
+3. `DeleteManyAsync(表达式)` 直接执行 SQL，绕开变更跟踪，不适合放在需要与实体操作同一事务回滚的场景。
 
 ---
 

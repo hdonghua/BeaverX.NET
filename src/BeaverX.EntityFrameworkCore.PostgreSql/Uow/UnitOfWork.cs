@@ -6,123 +6,104 @@ namespace BeaverX.EntityFrameworkCore.PostgreSql.Uow;
 
 internal sealed class UnitOfWork : IUnitOfWork
 {
-    private readonly IEnumerable<DbContext> _dbContexts;
-    private IDbContextTransaction? _currentTransaction;
-    private int _transactionCounter = 0;
-    private bool _isRolledBack = false;
+    private readonly IReadOnlyList<DbContext> _dbContexts;
+    private int _transactionCounter;
 
     public UnitOfWork(IEnumerable<DbContext> dbContexts)
     {
-        _dbContexts = dbContexts ?? throw new ArgumentNullException(nameof(dbContexts));
+        _dbContexts = (dbContexts ?? throw new ArgumentNullException(nameof(dbContexts))).ToList();
     }
 
-    /// <summary>
-    /// 开启事务上下文，仅做嵌套计数与重置标记
-    /// </summary>
-    public async Task BeginTransactionAsync(CancellationToken cancellationToken = default)
+    public async Task ExecuteAsync(Func<CancellationToken, Task> action, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(action);
+
         _transactionCounter++;
-
-        if (_transactionCounter == 1)
+        try
         {
-            _isRolledBack = false;
-        }
-
-        await Task.CompletedTask;
-    }
-
-    /// <summary>
-    /// 提交事务，利用单一 ExecutionStrategy 块闭环控制整个事务的生命周期
-    /// </summary>
-    public async Task CommitAsync(CancellationToken cancellationToken = default)
-    {
-        _transactionCounter--;
-
-        if (_isRolledBack)
-        {
-            throw new InvalidOperationException("Transaction failed: Nested transaction has been rolled back.");
-        }
-
-        // 仅在最外层方法退出、计数器归零时，发起真正的物理事务流水线
-        if (_transactionCounter == 0)
-        {
-            var dbList = _dbContexts.ToList();
-            if (dbList.Count == 0) return;
-
-            var mainDbContext = dbList[0];
-            var strategy = mainDbContext.Database.CreateExecutionStrategy();
-
-            // 将“开启事务”、“数据持久化”、“提交事务”全部锁死在同一个重试执行块中
-            await strategy.ExecuteAsync(async () =>
+            if (_transactionCounter == 1)
             {
-                try
-                {
-                    // 开启主上下文物理事务
-                    _currentTransaction = await mainDbContext.Database.BeginTransactionAsync(cancellationToken);
-                    var dbTransaction = _currentTransaction.GetDbTransaction();
-
-                    // 将物理事务句柄同步挂载到其余上下文
-                    for (int i = 1; i < dbList.Count; i++)
-                    {
-                        dbList[i].Database.UseTransaction(dbTransaction);
-                    }
-
-                    // 依次触发所有上下文的数据持久化
-                    foreach (var dbContext in dbList)
-                    {
-                        await dbContext.SaveChangesAsync(cancellationToken);
-                    }
-
-                    // 一键提交物理事务
-                    await _currentTransaction.CommitAsync(cancellationToken);
-                }
-                catch
-                {
-                    if (_currentTransaction != null)
-                    {
-                        await _currentTransaction.RollbackAsync(cancellationToken);
-                    }
-                    throw;
-                }
-                finally
-                {
-                    if (_currentTransaction != null)
-                    {
-                        await _currentTransaction.DisposeAsync();
-                        _currentTransaction = null;
-                    }
-                }
-            });
+                await CommitWithExecutionStrategyAsync(action, cancellationToken);
+            }
+            else
+            {
+                await action(cancellationToken);
+            }
+        }
+        finally
+        {
+            _transactionCounter--;
         }
     }
 
     /// <summary>
-    /// 回滚事务，标记当前上下文状态为已回滚
+    /// 最外层：在 ExecutionStrategy 内开启事务 → 执行委托 → SaveChanges → 提交。
     /// </summary>
-    public async Task RollbackAsync(CancellationToken cancellationToken = default)
+    private async Task CommitWithExecutionStrategyAsync(
+        Func<CancellationToken, Task> action,
+        CancellationToken cancellationToken)
     {
-        _isRolledBack = true;
-
-        if (_currentTransaction != null)
+        if (_dbContexts.Count == 0)
         {
-            await _currentTransaction.RollbackAsync(cancellationToken);
-            await _currentTransaction.DisposeAsync();
-            _currentTransaction = null;
+            await action(cancellationToken);
+            return;
         }
 
-        _transactionCounter = 0;
+        var dbList = _dbContexts;
+        var mainDbContext = dbList[0];
+        var strategy = mainDbContext.Database.CreateExecutionStrategy();
+
+        await strategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await mainDbContext.Database.BeginTransactionAsync(cancellationToken);
+
+            try
+            {
+                var dbTransaction = transaction.GetDbTransaction();
+
+                for (var i = 1; i < dbList.Count; i++)
+                {
+                    await dbList[i].Database.UseTransactionAsync(dbTransaction, cancellationToken);
+                }
+
+                await action(cancellationToken);
+
+                foreach (var dbContext in dbList)
+                {
+                    await dbContext.SaveChangesAsync(cancellationToken);
+                }
+
+                await transaction.CommitAsync(cancellationToken);
+            }
+            catch
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                ClearChangeTrackers();
+                throw;
+            }
+        });
+    }
+
+    private void ClearChangeTrackers()
+    {
+        foreach (var dbContext in _dbContexts)
+        {
+            dbContext.ChangeTracker.Clear();
+        }
     }
 
     public void Dispose()
     {
-        _currentTransaction?.Dispose();
+        if (_transactionCounter > 0)
+        {
+            ClearChangeTrackers();
+            _transactionCounter = 0;
+        }
     }
 
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
-        if (_currentTransaction != null)
-        {
-            await _currentTransaction.DisposeAsync();
-        }
+        Dispose();
+        return ValueTask.CompletedTask;
     }
 }
