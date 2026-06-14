@@ -5,11 +5,11 @@ using BeaverX.Domain.Users;
 namespace BeaverX.WebMvc.Controllers; 
 
 /// <summary>
-/// BeaverX 统一 Web 门面控制器基类（支持 Web API 和传统 MVC 行为扩展）
+/// BeaverX API控制器基类
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public abstract class BeaverXController : ControllerBase
+public abstract class BeaverXControllerBase : ControllerBase
 {
     private ICurrentUser? _currentUser;
 

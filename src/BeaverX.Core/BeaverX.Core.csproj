@@ -6,7 +6,7 @@
 		<Nullable>enable</Nullable>
 
 		<PackageId>BeaverX.Core</PackageId>
-		<Version>1.0.0-preview.3</Version>
+		<Version>1.0.0</Version>
 		<Authors>hedonghua</Authors>
 		<Description>BeaverX.Core 是一个专为现代 .NET 应用打造的高性能、轻量级、完全白盒化的模块化底层核心驱动引擎。它提供了高内聚的模块生命周期管理与全自动依赖注入扫描。</Description>
 		<PackageTags>abp;modular;framework;dependency-injection;ioc;net10;aot</PackageTags>

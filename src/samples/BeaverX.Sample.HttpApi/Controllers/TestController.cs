@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BeaverX.Sample.HttpApi.Controllers;
 
-public class TestController : BeaverXController
+public class TestController : BeaverXControllerBase
 {
     private readonly MessageService messageService;
     private readonly IUserService userService;

@@ -1,7 +1,8 @@
 ﻿using System.Linq.Expressions;
-using Microsoft.EntityFrameworkCore;
 using BeaverX.Domain.Entities;
+using BeaverX.Domain.IdGeneration;
 using BeaverX.Domain.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace BeaverX.EntityFrameworkCore.Repositories;
 
@@ -10,12 +11,27 @@ public class EfCoreRepository<TDbContext, TEntity, TKey> : IRepository<TEntity, 
     where TEntity : class, IEntity<TKey>
 {
     protected readonly TDbContext DbContext;
+    protected readonly IIdGenerator<TKey> IdGenerator;
     protected readonly DbSet<TEntity> DbSet;
 
-    public EfCoreRepository(TDbContext dbContext)
+    public EfCoreRepository(TDbContext dbContext, IIdGenerator<TKey> idGenerator)
     {
         DbContext = dbContext;
         DbSet = dbContext.Set<TEntity>();
+        IdGenerator = idGenerator;
+    }
+
+    protected virtual void TrySetIdIfNeeded(TEntity entity)
+    {
+        if (!EntityIdHelper.IsDefault(entity.Id))
+        {
+            return;
+        }
+
+        if (IdGenerator != null)
+        {
+            entity.Id = IdGenerator.Generate();
+        }
     }
 
     public virtual IQueryable<TEntity> GetQueryable() => DbSet.AsQueryable();
@@ -60,6 +76,7 @@ public class EfCoreRepository<TDbContext, TEntity, TKey> : IRepository<TEntity, 
 
     public virtual async Task<TEntity> InsertAsync(TEntity entity, bool autoSave = true, CancellationToken cancellationToken = default)
     {
+        TrySetIdIfNeeded(entity);
         await DbSet.AddAsync(entity, cancellationToken);
         if (autoSave) await DbContext.SaveChangesAsync(cancellationToken);
         return entity;
@@ -94,7 +111,13 @@ public class EfCoreRepository<TDbContext, TEntity, TKey> : IRepository<TEntity, 
 
     public virtual async Task InsertManyAsync(IEnumerable<TEntity> entities, bool autoSave = true, CancellationToken cancellationToken = default)
     {
-        await DbSet.AddRangeAsync(entities, cancellationToken);
+        var entityList = entities as IList<TEntity> ?? entities.ToList();
+        foreach (var entity in entityList)
+        {
+            TrySetIdIfNeeded(entity);
+        }
+
+        await DbSet.AddRangeAsync(entityList, cancellationToken);
         if (autoSave) await DbContext.SaveChangesAsync(cancellationToken);
     }
 
@@ -127,7 +150,7 @@ public class EfCoreRepository<TDbContext, TEntity> : EfCoreRepository<TDbContext
     where TDbContext : DbContext
     where TEntity : class, IEntity<long>
 {
-    public EfCoreRepository(TDbContext dbContext) : base(dbContext)
+    public EfCoreRepository(TDbContext dbContext, IIdGenerator<long> idGenerator) : base(dbContext, idGenerator)
     {
     }
 }
