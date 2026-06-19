@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+
+		<PackageId>BeaverX.EntityFrameworkCore.MySql</PackageId>
+		<Version>1.0.0</Version>
+		<Authors>hedonghua</Authors>
+		<Description>BeaverX.EntityFrameworkCore.MySql 是 BeaverX 框架针对 MySQL / MariaDB 数据库的官方适配驱动包。基于 MySql.EntityFrameworkCore（Connector/NET），提供 UseMySQL 驱动注册、ExecutionStrategy 兼容的工作单元（IUnitOfWork）及 EnableRetryOnFailure 开箱即用配置。</Description>
+		<PackageTags>abp;efcore;mysql;mariadb;orm;framework;net10;beaverx</PackageTags>
+		<Copyright>Copyright © 2026 BeaverX</Copyright>
+
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/hdonghua/BeaverX.NET</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/hdonghua/BeaverX.NET.git</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="MySql.EntityFrameworkCore" Version="10.0.7" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\BeaverX.EntityFrameworkCore\BeaverX.EntityFrameworkCore.csproj" />
+	</ItemGroup>
+
+</Project>
