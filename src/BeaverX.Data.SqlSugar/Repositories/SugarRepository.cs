@@ -23,7 +23,7 @@ internal class SugarRepository<TEntity, TKey> : SimpleClient<TEntity>, ISugarRep
         Client = client;
         IdGenerator = idGenerator;
         CurrentUser = currentUser;
-        base.Context = client;
+        Context = client;
     }
 
     public virtual ISugarQueryable<TEntity> GetSugarQueryable() => Client.Queryable<TEntity>();
@@ -33,7 +33,7 @@ internal class SugarRepository<TEntity, TKey> : SimpleClient<TEntity>, ISugarRep
     /// </summary>
     public virtual IQueryable<TEntity> GetQueryable() =>
         throw new NotSupportedException(
-            "BeaverX.Data.SqlSugar 不支持 IQueryable。请注入 ISqlSugarRepository<TEntity, TKey> 并使用 GetSugarQueryable()。");
+            "BeaverX.Data.SqlSugar 不支持 IQueryable。请注入 ISugarRepository<TEntity, TKey> 并使用 GetSugarQueryable()。");
 
     protected virtual void TrySetIdIfNeeded(TEntity entity)
     {
@@ -71,12 +71,18 @@ internal class SugarRepository<TEntity, TKey> : SimpleClient<TEntity>, ISugarRep
         return list.FirstOrDefault();
     }
 
-    public virtual async Task<List<TEntity>> GetListAsync(CancellationToken cancellationToken = default)
+    /// <summary>
+    /// IRepository / ISugarRepository 语义（隐藏 SimpleClient 同名方法）。
+    /// </summary>
+    public new virtual async Task<List<TEntity>> GetListAsync(CancellationToken cancellationToken = default)
     {
         return await Client.Queryable<TEntity>().ToListAsync(cancellationToken);
     }
 
-    public virtual async Task<List<TEntity>> GetListAsync(
+    /// <summary>
+    /// IRepository / ISugarRepository 语义（隐藏 SimpleClient 同名方法）。
+    /// </summary>
+    public new virtual async Task<List<TEntity>> GetListAsync(
         Expression<Func<TEntity, bool>> predicate,
         CancellationToken cancellationToken = default)
     {
