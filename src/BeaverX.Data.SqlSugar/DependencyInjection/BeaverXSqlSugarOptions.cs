@@ -33,6 +33,13 @@ public class BeaverXSqlSugarOptions
     public Action<ISqlSugarClient>? ConfigureClient { get; set; }
 
     /// <summary>
+    /// 是否打印 SQL。
+    /// IHostEnvironment.IsDevelopment()自动开启，其它环境关闭
+    /// 显式可强制开关
+    /// </summary>
+    public bool? EnableSqlLog { get; set; }
+
+    /// <summary>
     /// 实体写入前处理回调。与框架内置审计处理在同一个 DataExecuting AOP 中执行，
     /// 避免业务侧覆盖内置审计处理器。
     /// </summary>

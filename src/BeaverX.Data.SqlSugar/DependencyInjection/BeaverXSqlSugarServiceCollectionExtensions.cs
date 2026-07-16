@@ -8,6 +8,8 @@ using BeaverX.Domain.Uow;
 using BeaverX.Domain.Users;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SqlSugar;
 
@@ -33,7 +35,15 @@ public static class BeaverXSqlSugarServiceCollectionExtensions
             var currentUser = sp.GetRequiredService<ICurrentUser>();
             var longIdGenerator = sp.GetRequiredService<IIdGenerator<long>>();
             var guidIdGenerator = sp.GetRequiredService<IIdGenerator<Guid>>();
-            return SqlSugarClientFactory.Create(options, currentUser, longIdGenerator, guidIdGenerator);
+            var hostEnvironment = sp.GetService<IHostEnvironment>();
+            var loggerFactory = sp.GetService<ILoggerFactory>();
+            return SqlSugarClientFactory.Create(
+                options,
+                currentUser,
+                longIdGenerator,
+                guidIdGenerator,
+                hostEnvironment,
+                loggerFactory);
         });
 
         services.TryAddScoped<IUnitOfWork, SqlSugarUnitOfWork>();

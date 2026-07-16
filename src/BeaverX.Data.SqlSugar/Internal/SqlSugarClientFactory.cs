@@ -3,6 +3,8 @@ using BeaverX.Data.SqlSugar.DependencyInjection;
 using BeaverX.Domain.Entities;
 using BeaverX.Domain.IdGeneration;
 using BeaverX.Domain.Users;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SqlSugar;
 
@@ -16,7 +18,9 @@ internal static class SqlSugarClientFactory
         IOptions<BeaverXSqlSugarOptions> optionsAccessor,
         ICurrentUser currentUser,
         IIdGenerator<long> longIdGenerator,
-        IIdGenerator<Guid> guidIdGenerator)
+        IIdGenerator<Guid> guidIdGenerator,
+        IHostEnvironment? hostEnvironment,
+        ILoggerFactory? loggerFactory)
     {
         var options = optionsAccessor.Value;
         if (string.IsNullOrWhiteSpace(options.ConnectionString))
@@ -45,8 +49,47 @@ internal static class SqlSugarClientFactory
 
         var db = new SqlSugarClient(config);
         ConfigureBeaverXFilters(db, currentUser, longIdGenerator, guidIdGenerator, options.NormalizeEntityBeforeWrite);
+        ConfigureSqlLog(db, options, hostEnvironment, loggerFactory);
         options.ConfigureClient?.Invoke(db);
         return db;
+    }
+
+    private static void ConfigureSqlLog(
+        SqlSugarClient db,
+        BeaverXSqlSugarOptions options,
+        IHostEnvironment? hostEnvironment,
+        ILoggerFactory? loggerFactory)
+    {
+        var enabled = options.EnableSqlLog ?? hostEnvironment?.IsDevelopment() == true;
+        if (!enabled)
+        {
+            return;
+        }
+
+        var logger = loggerFactory?.CreateLogger("BeaverX.Data.SqlSugar");
+        var dbType = db.CurrentConnectionConfig.DbType;
+
+        db.Aop.OnLogExecuting = (sql, pars) =>
+        {
+            string text;
+            try
+            {
+                text = UtilMethods.GetSqlString(dbType, sql, pars);
+            }
+            catch
+            {
+                text = sql;
+            }
+
+            if (logger != null)
+            {
+                logger.LogInformation("{Sql}", text);
+            }
+            else
+            {
+                Console.WriteLine(text);
+            }
+        };
     }
 
     /// <summary>
