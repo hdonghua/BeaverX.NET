@@ -1,3 +1,4 @@
+using System.Reflection;
 using BeaverX.Data.SqlSugar.DependencyInjection;
 using BeaverX.Domain.Entities;
 using BeaverX.Domain.Users;
@@ -8,6 +9,8 @@ namespace BeaverX.Data.SqlSugar.Internal;
 
 internal static class SqlSugarClientFactory
 {
+    private static readonly NullabilityInfoContext NullabilityContext = new();
+
     public static ISqlSugarClient Create(IOptions<BeaverXSqlSugarOptions> optionsAccessor, ICurrentUser currentUser)
     {
         var options = optionsAccessor.Value;
@@ -25,16 +28,63 @@ internal static class SqlSugarClientFactory
             MoreSettings = new ConnMoreSettings
             {
                 IsAutoDeleteQueryFilter = true,
-                IsAutoUpdateQueryFilter = true
+                IsAutoUpdateQueryFilter = true,
+                PgSqlIsAutoToLower = false,
+                PgSqlIsAutoToLowerSchema = false,
+                PgSqlIsAutoToLowerCodeFirst = false,
             }
         };
 
         options.ConfigureConnection?.Invoke(config);
+        ConfigureClrNullableColumns(config);
 
         var db = new SqlSugarClient(config);
         ConfigureBeaverXFilters(db, currentUser, options.NormalizeEntityBeforeWrite);
         options.ConfigureClient?.Invoke(db);
         return db;
+    }
+
+    /// <summary>
+    /// 按 CLR 可空性自动设置列可空，避免 Domain 实体依赖 SqlSugar 特性。
+    /// 覆盖审计基类中的 DateTime? / long? 以及业务实体中的 string? 等字段。
+    /// </summary>
+    private static void ConfigureClrNullableColumns(ConnectionConfig config)
+    {
+        config.ConfigureExternalServices ??= new ConfigureExternalServices();
+        var previous = config.ConfigureExternalServices.EntityService;
+
+        config.ConfigureExternalServices.EntityService = (property, column) =>
+        {
+            previous?.Invoke(property, column);
+
+            if (column.IsIgnore)
+            {
+                return;
+            }
+
+            if (IsClrNullable(property))
+            {
+                column.IsNullable = true;
+            }
+        };
+    }
+
+    private static bool IsClrNullable(PropertyInfo property)
+    {
+        var type = property.PropertyType;
+        if (Nullable.GetUnderlyingType(type) != null)
+        {
+            return true;
+        }
+
+        if (type.IsValueType)
+        {
+            return false;
+        }
+
+        var nullability = NullabilityContext.Create(property);
+        return nullability.ReadState == NullabilityState.Nullable
+            || nullability.WriteState == NullabilityState.Nullable;
     }
 
     private static void ConfigureBeaverXFilters(

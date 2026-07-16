@@ -38,7 +38,7 @@ public class BeaverXSqlSugarOptions
     /// </summary>
     public Action<object?>? NormalizeEntityBeforeWrite { get; set; }
 
-    internal List<Type> EntityTypes { get; } = [];
+    public List<Type> EntityTypes { get; } = [];
 
     /// <summary>
     /// 注册需要自动绑定 <see cref="Domain.Repositories.IRepository{TEntity,TKey}"/> 的实体类型。
