@@ -2,6 +2,7 @@ using BeaverX.Data.SqlSugar.Internal;
 using BeaverX.Data.SqlSugar.Repositories;
 using BeaverX.Data.SqlSugar.Uow;
 using BeaverX.Domain.Entities;
+using BeaverX.Domain.IdGeneration;
 using BeaverX.Domain.Repositories;
 using BeaverX.Domain.Uow;
 using BeaverX.Domain.Users;
@@ -30,7 +31,9 @@ public static class BeaverXSqlSugarServiceCollectionExtensions
         {
             var options = sp.GetRequiredService<IOptions<BeaverXSqlSugarOptions>>();
             var currentUser = sp.GetRequiredService<ICurrentUser>();
-            return SqlSugarClientFactory.Create(options, currentUser);
+            var longIdGenerator = sp.GetRequiredService<IIdGenerator<long>>();
+            var guidIdGenerator = sp.GetRequiredService<IIdGenerator<Guid>>();
+            return SqlSugarClientFactory.Create(options, currentUser, longIdGenerator, guidIdGenerator);
         });
 
         services.TryAddScoped<IUnitOfWork, SqlSugarUnitOfWork>();
