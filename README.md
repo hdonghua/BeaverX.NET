@@ -13,11 +13,13 @@
 
 | NuGet 包 | 版本（当前仓库） | 职责 |
 |----------|------------------|------|
-| [BeaverX.Core](https://www.nuget.org/packages/BeaverX.Core) | `1.0.0-preview.3` | 模块化引擎、模块生命周期、`DependsOn` 依赖解析、约定式 DI 扫描 |
-| [BeaverX.Domain](https://www.nuget.org/packages/BeaverX.Domain) | `1.0.0-preview.4` | 领域契约：实体基类、审计接口、仓储接口、`ICurrentUser`、`IUnitOfWork` |
-| [BeaverX.EntityFrameworkCore](https://www.nuget.org/packages/BeaverX.EntityFrameworkCore) | `1.0.0-preview.4` | EF Core 基础设施：`BeaverXDbContext`、泛型仓储实现、`AddBeaverXDbContext` |
-| [BeaverX.EntityFrameworkCore.PostgreSql](https://www.nuget.org/packages/BeaverX.EntityFrameworkCore.PostgreSql) | `1.0.0-preview.4` | PostgreSQL 驱动（Npgsql）与工作单元实现 |
-| [BeaverX.WebMvc](https://www.nuget.org/packages/BeaverX.WebMvc) | `1.0.0-preview.4` | Web 表现层：`BeaverXController` 基类、`HttpContext` 当前用户 |
+| [BeaverX.Core](https://www.nuget.org/packages/BeaverX.Core) | `1.0.0` | 模块化引擎、模块生命周期、`DependsOn` 依赖解析、约定式 DI 扫描 |
+| [BeaverX.Domain](https://www.nuget.org/packages/BeaverX.Domain) | `1.0.0` | 领域契约：实体基类、审计接口、仓储接口、`ICurrentUser`、`IUnitOfWork` |
+| [BeaverX.EntityFrameworkCore](https://www.nuget.org/packages/BeaverX.EntityFrameworkCore) | `1.0.0` | EF Core 基础设施：`BeaverXDbContext`、泛型仓储实现、`AddBeaverXDbContext` |
+| [BeaverX.EntityFrameworkCore.PostgreSql](https://www.nuget.org/packages/BeaverX.EntityFrameworkCore.PostgreSql) | `1.0.0` | PostgreSQL 驱动（Npgsql）与工作单元实现 |
+| [BeaverX.EntityFrameworkCore.MySql](https://www.nuget.org/packages/BeaverX.EntityFrameworkCore.MySql) | `1.0.0` | MySQL / MariaDB 驱动（MySql.EntityFrameworkCore）与工作单元实现 |
+| [BeaverX.Data.SqlSugar](https://www.nuget.org/packages/BeaverX.Data.SqlSugar) | `1.0.0` | SqlSugar 集成：仓储 / UoW、软删与审计；业务可直接使用 `ISqlSugarClient` |
+| [BeaverX.WebMvc](https://www.nuget.org/packages/BeaverX.WebMvc) | `1.0.0` | Web 表现层：`BeaverXController` 基类、`HttpContext` 当前用户 |
 
 依赖关系（自下而上）：
 
@@ -27,9 +29,14 @@ flowchart TB
   Domain[BeaverX.Domain] --> Core
   Ef[BeaverX.EntityFrameworkCore] --> Domain
   Pg[BeaverX.EntityFrameworkCore.PostgreSql] --> Ef
+  My[BeaverX.EntityFrameworkCore.MySql] --> Ef
+  Sugar[BeaverX.Data.SqlSugar] --> Domain
   Web[BeaverX.WebMvc] --> Domain
-  App[你的应用模块] --> Pg
-  App --> Web
+  AppEf[EF 应用模块] --> Pg
+  AppEf --> My
+  AppEf --> Web
+  AppSugar[SqlSugar 应用模块] --> Sugar
+  AppSugar --> Web
 ```
 
 ---
@@ -53,13 +60,14 @@ app.InitializeBeaverX();
 
 ### BeaverX.Domain
 
-纯领域契约层，**不依赖 EF 或 ASP.NET**。适合被应用层、领域服务、以及 EF 包共同引用。
+纯领域契约层，**不依赖具体 ORM 或 ASP.NET**。适合被应用层、领域服务、以及 EF / SqlSugar 数据访问包共同引用。
 
 - **实体**：`Entity<TKey>`、`Entity`（默认 `long` 主键）、`FullAuditedEntity` 等审计基类。
-- **软删除**：`ISoftDelete` 标记接口（具体过滤与拦截在 EF 包中实现）。
+- **软删除**：`ISoftDelete` 标记接口（具体过滤与拦截由 EF / SqlSugar 数据访问包实现）。
 - **仓储契约**：`IRepository<TEntity, TKey>`、`IRepository<TEntity>`（`long` 主键简写）。
 - **当前用户**：`ICurrentUser`（默认 `NullCurrentUser`，Web 场景由 WebMvc 替换）。
-- **工作单元**：`IUnitOfWork` 契约（PostgreSQL 包提供实现）。
+- **工作单元**：`IUnitOfWork` 契约（由各数据库驱动包或 `BeaverX.Data.SqlSugar` 提供实现）。
+
 
 业务服务只需依赖接口，例如：
 
@@ -94,9 +102,43 @@ PostgreSQL 官方适配包，基于 **Npgsql**。
 - 注册 `PostgreSqlDbDriverOptionsBuilder`，在 `AddBeaverXDbContext` 内部调用 `UseNpgsql`。
 - 注册 `IUnitOfWork` 实现，通过 `ExecuteAsync` 在 `ExecutionStrategy` 可重试块内执行并提交事务（兼容 `EnableRetryOnFailure`）。
 
-若使用其他数据库，可参考本包实现自定义的 `IDbDriverOptionsBuilder` 与 `IUnitOfWork`。
+### BeaverX.EntityFrameworkCore.MySql
+
+MySQL / MariaDB 官方适配包，基于 **MySql.EntityFrameworkCore**（Connector/NET）。
+
+- 注册 `MySqlDbDriverOptionsBuilder`，在 `AddBeaverXDbContext` 内部调用 `UseMySQL`。
+- 注册 `IUnitOfWork` 实现，行为与 PostgreSQL 包对齐（嵌套 `ExecuteAsync`、`EnableRetryOnFailure` 兼容）。
+
+模块依赖示例：`[DependsOn(typeof(BeaverXEntityFrameworkCoreMySqlModule), typeof(BeaverXWebMvcModule))]`。
+
+### BeaverX.Data.SqlSugar
+
+将 Domain 仓储 / 工作单元契约落地到 **SqlSugar**。与 EF 线互斥：同一应用只注册一套 `IUnitOfWork` / `IRepository` 实现。
+
+- **`AddBeaverXSqlSugar`**：配置连接字符串与 `DbType`（PostgreSQL / MySql / SqlServer / Sqlite 等由业务自选），并按实体注册仓储。
+- 自动软删除查询过滤、落库审计字段填充；实体删除对 `ISoftDelete` 转为更新。
+- 提供 `ISugarRepository<TEntity, TKey>`：复杂查询请用 `GetSugarQueryable()` / `ISqlSugarClient`，**不要**使用 Domain 的 `GetQueryable()`（SqlSugar 实现会抛出不支持异常）。
+- SqlSugar 无 EF 式 ChangeTracker：写操作立即发 SQL；`autoSave` 仅为接口兼容，事务由 `IUnitOfWork` 统一提交 / 回滚。
+
+```csharp
+[DependsOn(typeof(BeaverXDataSqlSugarModule), typeof(BeaverXWebMvcModule))]
+public class MyAppModule : BeaverXModule
+{
+    public override void ConfigureServices(ServiceConfigurationContext context)
+    {
+        context.Services.AddBeaverXSqlSugar(opt =>
+        {
+            opt.ConnectionString = context.Configuration.GetConnectionString("Default")!;
+            opt.DbType = DbType.PostgreSQL; // 或 MySql / SqlServer / Sqlite...
+            opt.AddEntity<Product>();
+            // 或 opt.AddEntitiesFromAssembly(typeof(Product).Assembly);
+        });
+    }
+}
+```
 
 ### BeaverX.WebMvc
+
 
 ASP.NET Core **Web API / MVC** 表现层集成。
 
@@ -122,14 +164,22 @@ ASP.NET Core **Web API / MVC** 表现层集成。
 dotnet new web -n MyApp
 cd MyApp
 
-dotnet add package BeaverX.Core --version 1.0.0-preview.3
-dotnet add package BeaverX.Domain --version 1.0.0-preview.4
-dotnet add package BeaverX.EntityFrameworkCore --version 1.0.0-preview.4
-dotnet add package BeaverX.EntityFrameworkCore.PostgreSql --version 1.0.0-preview.4
-dotnet add package BeaverX.WebMvc --version 1.0.0-preview.4
+dotnet add package BeaverX.Core --version 1.0.0
+dotnet add package BeaverX.Domain --version 1.0.0
+dotnet add package BeaverX.EntityFrameworkCore --version 1.0.0
+dotnet add package BeaverX.EntityFrameworkCore.PostgreSql --version 1.0.0
+dotnet add package BeaverX.WebMvc --version 1.0.0
 ```
 
-> Web 宿主需要引用 **Core**；业务/数据层通常引用 **Domain** + **EF** + **数据库驱动**；有 HTTP API 时再引用 **WebMvc**。版本号请与 [NuGet](https://www.nuget.org/packages?q=BeaverX) 上已发布版本保持一致。
+MySQL（EF）或 SqlSugar 时，将驱动包替换为：
+
+```bash
+dotnet add package BeaverX.EntityFrameworkCore.MySql --version 1.0.0
+# 或（与 EF 驱动二选一）
+dotnet add package BeaverX.Data.SqlSugar --version 1.0.0
+```
+
+> Web 宿主需要引用 **Core**；业务/数据层通常引用 **Domain** + **EF 驱动** 或 **SqlSugar**；有 HTTP API 时再引用 **WebMvc**。版本号请与 [NuGet](https://www.nuget.org/packages?q=BeaverX) 上已发布版本保持一致。
 
 ### 2. 定义启动模块（串联各层）
 
@@ -259,9 +309,10 @@ public class ProductController : BeaverXController
 
 路由示例：`GET /api/Product/list`。控制器内可通过 `CurrentUser` 访问当前登录用户 ID（需自行实现认证并填充 `HttpContext.User`）。
 
-### 7. 工作单元（可选，PostgreSql 包）
+### 7. 工作单元（可选，数据库驱动包 / SqlSugar）
 
-需要**多步写操作同一事务提交 / 异常整体回滚**时，注入 `IUnitOfWork`。框架只提供单一入口：
+需要**多步写操作同一事务提交 / 异常整体回滚**时，注入 `IUnitOfWork`（由 PostgreSql / MySql / SqlSugar 包注册）。框架只提供单一入口：
+
 
 ```csharp
 Task ExecuteAsync(Func<CancellationToken, Task> action, CancellationToken cancellationToken = default);
@@ -362,7 +413,9 @@ await _uow.ExecuteAsync(async ct =>
 | 仅模块化 + 约定 DI（控制台、Worker） | `BeaverX.Core`、`BeaverX.Domain` |
 | 领域模型 + 仓储接口，无数据库 | `BeaverX.Domain` |
 | EF Core + 仓储实现，数据库无关 | `BeaverX.EntityFrameworkCore` + 自定义 `IDbDriverOptionsBuilder` |
-| PostgreSQL 项目 | 上表 + `BeaverX.EntityFrameworkCore.PostgreSql` |
+| PostgreSQL（EF） | 上表 + `BeaverX.EntityFrameworkCore.PostgreSql` |
+| MySQL / MariaDB（EF） | 上表 + `BeaverX.EntityFrameworkCore.MySql` |
+| SqlSugar（自选 DbType） | `BeaverX.Domain` + `BeaverX.Data.SqlSugar`（勿与 EF 驱动同开） |
 | Web API / MVC | 再加 `BeaverX.WebMvc` |
 
 ---
@@ -390,6 +443,8 @@ src/
 ├── BeaverX.Domain/
 ├── BeaverX.EntityFrameworkCore/
 ├── BeaverX.EntityFrameworkCore.PostgreSql/
+├── BeaverX.EntityFrameworkCore.MySql/
+├── BeaverX.Data.SqlSugar/
 ├── BeaverX.WebMvc/
 └── samples/BeaverX.Sample.HttpApi/
 ```

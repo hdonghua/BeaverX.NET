@@ -7,5 +7,6 @@
   <Project Path="BeaverX.EntityFrameworkCore.MySql/BeaverX.EntityFrameworkCore.MySql.csproj" Id="64049627-6ad5-4525-b63f-450214e52a68" />
   <Project Path="BeaverX.EntityFrameworkCore.PostgreSql/BeaverX.EntityFrameworkCore.PostgreSql.csproj" Id="b535827d-5df9-46cf-80b4-c7dc01831c96" />
   <Project Path="BeaverX.EntityFrameworkCore/BeaverX.EntityFrameworkCore.csproj" Id="b8207fc8-c7ea-410b-9463-21e40e23e466" />
+  <Project Path="BeaverX.Data.SqlSugar/BeaverX.Data.SqlSugar.csproj" Id="5a40aa76-7838-4bfd-a13d-edf00e9e981b" />
   <Project Path="BeaverX.WebMvc/BeaverX.WebMvc.csproj" Id="4e962f96-8236-4754-a51f-be72f0016008" />
 </Solution>

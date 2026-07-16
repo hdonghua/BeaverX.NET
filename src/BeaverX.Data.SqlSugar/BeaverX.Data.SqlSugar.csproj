@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<RootNamespace>BeaverX.Data.SqlSugar</RootNamespace>
+		<AssemblyName>BeaverX.Data.SqlSugar</AssemblyName>
+
+		<PackageId>BeaverX.Data.SqlSugar</PackageId>
+		<Version>1.0.0</Version>
+		<Authors>hedonghua</Authors>
+		<Description>BeaverX.Data.SqlSugar 是 BeaverX 框架的 SqlSugar 数据访问集成包。实现 Domain 层 IRepository / IUnitOfWork 契约，内置软删除查询过滤与审计字段填充；业务侧可直接使用 ISqlSugarClient / ISugarQueryable。</Description>
+		<PackageTags>beaverx;sqlsugar;orm;repository;framework;net10</PackageTags>
+		<Copyright>Copyright © 2026 BeaverX</Copyright>
+
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/hdonghua/BeaverX.NET</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/hdonghua/BeaverX.NET.git</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="SqlSugarCore" Version="5.1.4.216" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\BeaverX.Domain\BeaverX.Domain.csproj" />
+	</ItemGroup>
+
+</Project>
